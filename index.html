@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Connect &amp; Pool</title>
+<meta name="description" content="Connect & Pool is a location-first ride-pooling web app for India. See, agree with, and chat with real co-travelers before you ever book — then share the ride and split the fare." />
+
+<!-- Open Graph tags so LinkedIn (and other platforms) show a rich preview card -->
+<meta property="og:title" content="Connect & Pool — Meet your co-traveler. Then share the ride." />
+<meta property="og:description" content="A location-first ride-pooling concept for India. Instead of an algorithm pairing strangers mid-route, travelers at airports, stations & malls see, agree with, and chat with real co-travelers before anything's booked — cutting costs, cutting wait times, and making shared mobility safer." />
+<meta property="og:image" content="https://mritishh.github.io/og-image.png" />
+<meta property="og:url" content="https://mritishh.github.io/" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<!-- Tailwind (CDN, no build step) -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- React 18 (UMD builds -- plain global scripts, no ES module resolution needed) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+<!-- Babel Standalone: compiles JSX to plain JS right in the browser -->
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+
+<style>
+  html, body, #root { height: 100%; margin: 0; }
+  body { background: #E7EEEC; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+/* ============================================================================
+   Minimal inline icon set — replaces the "lucide-react" package so this file
+   has zero external JS dependencies besides React itself.
+   ============================================================================ */
+
+function makeIcon(renderInner) {
+  return function IconComp({ size = 24, color = "currentColor", strokeWidth = 2, fill = "none", className, style }) {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill={fill}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+        style={style}
+      >
+        {renderInner()}
+      </svg>
+    );
+  };
+}
+
+const MapPin = makeIcon(() => (
+  <>
+    <path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z" />
+    <circle cx="12" cy="9" r="2.5" />
+  </>
+));
+
+const Navigation = makeIcon(() => <polygon points="12 2 19 21 12 17 5 21 12 2" />);
+
+const Clock = makeIcon(() => (
+  <>
+    <circle cx="12" cy="12" r="9" />
+    <polyline points="12 7 12 12 15.5 14" />
+  </>
+));
+
+const Users = makeIcon(() => (
+  <>
+    <circle cx="9" cy="8" r="3.2" />
+    <path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" />
+    <circle cx="17" cy="9" r="2.6" />
+    <path d="M15.5 14.2c2.6.4 4.5 2.3 4.5 5.3" />
+  </>
+));
+
+const ShieldCheck = makeIcon(() => (
+  <>
+    <path d="M12 3l7 3v6c0 4.8-3 8.5-7 9-4-.5-7-4.2-7-9V6l7-3z" />
+    <polyline points="9 12 11.5 14.5 15.5 9.5" />
+  </>
+));
+
+const Star = makeIcon(() => (
+  <polygon points="12 2.5 15 9 22 9.8 17 14.5 18.2 21.5 12 18 5.8 21.5 7 14.5 2 9.8 9 9 12 2.5" />
+));
+
+const MessageCircle = makeIcon(() => (
+  <path d="M3 12a9 9 0 1 1 9 9c-1.5 0-2.9-.3-4.1-.9L3 21l1-4.5A8.96 8.96 0 0 1 3 12z" />
+));
+
+const Phone = makeIcon(() => (
+  <path d="M4 5c0-1 1-2 2-2h2l2 5-2 1.5c1 2.3 2.7 4 5 5l1.5-2 5 2v2c0 1-1 2-2 2C10.5 20.5 3.5 13.5 4 5z" />
+));
+
+const Car = makeIcon(() => (
+  <>
+    <path d="M4 16V11l2-4h12l2 4v5" />
+    <rect x="3" y="16" width="18" height="3" rx="1" />
+    <circle cx="7.5" cy="19" r="1.5" />
+    <circle cx="16.5" cy="19" r="1.5" />
+  </>
+));
+
+const AlertTriangle = makeIcon(() => (
+  <>
+    <path d="M12 3 2 20h20L12 3z" />
+    <line x1="12" y1="9" x2="12" y2="14" />
+    <line x1="12" y1="17" x2="12" y2="17.01" />
+  </>
+));
+
+const CheckCircle2 = makeIcon(() => (
+  <>
+    <circle cx="12" cy="12" r="9" />
+    <polyline points="8.5 12 11 14.5 16 9" />
+  </>
+));
+
+const ChevronLeft = makeIcon(() => <polyline points="15 5 8 12 15 19" />);
+const ChevronRight = makeIcon(() => <polyline points="9 5 16 12 9 19" />);
+
+const Search = makeIcon(() => (
+  <>
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <line x1="20" y1="20" x2="15.3" y2="15.3" />
+  </>
+));
+
+const SlidersHorizontal = makeIcon(() => (
+  <>
+    <line x1="4" y1="7" x2="20" y2="7" />
+    <circle cx="9" cy="7" r="1.7" />
+    <line x1="4" y1="14" x2="20" y2="14" />
+    <circle cx="16" cy="14" r="1.7" />
+    <line x1="4" y1="19" x2="20" y2="19" />
+    <circle cx="12" cy="19" r="1.7" />
+  </>
+));
+
+const HomeIcon = makeIcon(() => (
+  <path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-8z" />
+));
+
+const UserIcon = makeIcon(() => (
+  <>
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M5 20c0-3.6 3-6.5 7-6.5s7 2.9 7 6.5" />
+  </>
+));
+
+const Lock = makeIcon(() => (
+  <>
+    <rect x="5" y="11" width="14" height="9" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+  </>
+));
+
+const Unlock = makeIcon(() => (
+  <>
+    <rect x="5" y="11" width="14" height="9" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 7.5-2" />
+  </>
+));
+
+const Send = makeIcon(() => <path d="M3 12l18-8-8 18-2-8-8-2z" />);
+
+const X = makeIcon(() => (
+  <>
+    <line x1="5" y1="5" x2="19" y2="19" />
+    <line x1="19" y1="5" x2="5" y2="19" />
+  </>
+));
+
+const Flag = makeIcon(() => (
+  <>
+    <path d="M5 21V4" />
+    <path d="M5 4h13l-2.5 4L18 12H5" />
+  </>
+));
+
+const BadgeCheck = makeIcon(() => (
+  <>
+    <path d="M12 2l2.2 1.6 2.6-.4 1 2.5 2.4 1.2-.4 2.6 1.6 2.2-1.6 2.2.4 2.6-2.4 1.2-1 2.5-2.6-.4L12 22l-2.2-1.6-2.6.4-1-2.5-2.4-1.2.4-2.6L2.6 12l1.6-2.2-.4-2.6 2.4-1.2 1-2.5 2.6.4L12 2z" />
+    <polyline points="8.5 12 11 14.5 16 9" />
+  </>
+));
+
+const TrendingUp = makeIcon(() => (
+  <>
+    <polyline points="3 17 9 11 13 15 21 6" />
+    <polyline points="15 6 21 6 21 12" />
+  </>
+));
+
+const Timer = makeIcon(() => (
+  <>
+    <line x1="10" y1="2" x2="14" y2="2" />
+    <line x1="12" y1="6" x2="12" y2="2" />
+    <circle cx="12" cy="14" r="8" />
+    <line x1="12" y1="14" x2="15" y2="11" />
+  </>
+));
+
+const ShieldAlert = makeIcon(() => (
+  <>
+    <path d="M12 3l7 3v6c0 4.8-3 8.5-7 9-4-.5-7-4.2-7-9V6l7-3z" />
+    <line x1="12" y1="8" x2="12" y2="13" />
+    <line x1="12" y1="16" x2="12" y2="16.01" />
+  </>
+));
+
+const Plus = makeIcon(() => (
+  <>
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </>
+));
+
+const { useState, useEffect, useRef } = React;
+
+
+/* ============================================================================
+   CONNECT & POOL — mock data
+   ============================================================================ */
+
+const PLACES = [
+  "Gachibowli", "Hitech City", "Banjara Hills", "Jubilee Hills", "Kukatpally",
+  "LB Nagar", "Uppal", "Secunderabad Railway Station", "Mehdipatnam", "Madhapur",
+  "Kondapur", "Ameerpet", "Begumpet", "Charminar", "Kompally"
+];
+
+const CURRENT_LOCATION = "Rajiv Gandhi Intl Airport · T1 Arrivals";
+
+const VEHICLES = [
+  { id: "auto", label: "Auto", seats: 3, fare: 180, eta: 4 },
+  { id: "cab", label: "Cab", seats: 4, fare: 380, eta: 6 },
+  { id: "suv", label: "SUV", seats: 6, fare: 560, eta: 8 },
+];
+
+const AVATAR_COLORS = ["#0B4F4F", "#114B7A", "#8A4B0B", "#6A3D8F", "#1E6E4A", "#7A2E3D"];
+
+function makeTravelers() {
+  const names = [
+    ["Ananya Rao", "AR", "Female"], ["Vikram Sinha", "VS", "Male"],
+    ["Priya Menon", "PM", "Female"], ["Rahul Verma", "RV", "Male"],
+    ["Sneha Iyer", "SI", "Female"], ["Karthik Reddy", "KR", "Male"],
+    ["Divya Nair", "DN", "Female"], ["Arjun Kapoor", "AK", "Male"],
+  ];
+  return names.map((n, i) => ({
+    id: i + 1,
+    name: n[0],
+    initials: n[1],
+    gender: n[2],
+    color: AVATAR_COLORS[i % AVATAR_COLORS.length],
+    destination: PLACES[(i * 2 + 3) % PLACES.length],
+    matchPercent: 96 - i * 4 - (i % 2 === 0 ? 0 : 3),
+    verified: i % 3 !== 2,
+    rating: (4.9 - i * 0.11).toFixed(1),
+    timePosted: `${(i % 5) + 1} min ago`,
+    phone: `+91 98${(10000000 + i * 137924).toString().slice(0, 8)}`,
+  }));
+}
+
+/* ============================================================================
+   Small shared UI primitives
+   ============================================================================ */
+
+function FlapText({ text, className = "", tone = "dark" }) {
+  const bg = tone === "dark" ? "var(--ink)" : "var(--accent)";
+  return (
+    <span className={"flap-row " + className}>
+      {text.split("").map((ch, i) => (
+        <span
+          key={i}
+          className="flap-tile"
+          style={{ animationDelay: `${i * 28}ms`, background: bg }}
+        >
+          {ch === " " ? "\u00A0" : ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function Avatar({ name, initials, color, size = 44 }) {
+  return (
+    <div
+      className="rounded-full flex items-center justify-center font-semibold shrink-0"
+      style={{
+        width: size, height: size, background: color, color: "#fff",
+        fontSize: size * 0.36, fontFamily: "'Space Grotesk', sans-serif",
+      }}
+      aria-label={name}
+    >
+      {initials}
+    </div>
+  );
+}
+
+function VerifiedBadge({ small }) {
+  return (
+    <span
+      className={"inline-flex items-center gap-1 rounded-full font-medium " + (small ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs")}
+      style={{ background: "var(--success-light)", color: "var(--success)" }}
+    >
+      <BadgeCheck size={small ? 12 : 14} strokeWidth={2.5} />
+      Verified
+    </span>
+  );
+}
+
+function PrimaryButton({ children, onClick, disabled, full = true, icon: Icon }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={
+        "flex items-center justify-center gap-2 rounded-xl font-semibold text-base py-3.5 transition-transform active:scale-[0.98] " +
+        (full ? "w-full" : "px-6")
+      }
+      style={{
+        background: disabled ? "var(--line)" : "var(--accent)",
+        color: disabled ? "var(--muted)" : "#fff",
+        fontFamily: "'Space Grotesk', sans-serif",
+        boxShadow: disabled ? "none" : "0 8px 20px -8px rgba(255,107,53,0.55)",
+      }}
+    >
+      {Icon && <Icon size={18} />}
+      {children}
+    </button>
+  );
+}
+
+function SecondaryButton({ children, onClick, full = false, icon: Icon }) {
+  return (
+    <button
+      onClick={onClick}
+      className={"flex items-center justify-center gap-2 rounded-xl font-semibold text-sm py-3 border transition-colors " + (full ? "w-full" : "px-4")}
+      style={{ borderColor: "var(--line)", color: "var(--ink)", background: "#fff" }}
+    >
+      {Icon && <Icon size={16} />}
+      {children}
+    </button>
+  );
+}
+
+function TopBar({ title, onBack, right }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3.5 border-b sticky top-0 z-20" style={{ background: "rgba(247,250,249,0.96)", borderColor: "var(--line)", backdropFilter: "blur(6px)" }}>
+      <div className="flex items-center gap-2 min-w-0">
+        {onBack && (
+          <button onClick={onBack} className="p-1.5 -ml-1.5 rounded-full active:bg-black/5">
+            <ChevronLeft size={20} color="var(--ink)" />
+          </button>
+        )}
+        <h1 className="text-base font-semibold truncate" style={{ color: "var(--ink)", fontFamily: "'Space Grotesk', sans-serif" }}>{title}</h1>
+      </div>
+      {right}
+    </div>
+  );
+}
+
+function BottomNav({ screen, setScreen, requestCount }) {
+  const items = [
+    { id: "feed", label: "Nearby", icon: HomeIcon },
+    { id: "chat", label: "Chats", icon: MessageCircle, badge: requestCount },
+    { id: "profile", label: "Profile", icon: UserIcon },
+  ];
+  return (
+    <div className="sticky bottom-0 z-20 flex border-t" style={{ background: "#fff", borderColor: "var(--line)" }}>
+      {items.map((it) => {
+        const active = screen === it.id;
+        return (
+          <button
+            key={it.id}
+            onClick={() => setScreen(it.id)}
+            className="flex-1 flex flex-col items-center gap-1 py-2.5 relative"
+          >
+            <it.icon size={21} color={active ? "var(--primary)" : "var(--muted)"} strokeWidth={active ? 2.4 : 2} />
+            <span className="text-xs font-medium" style={{ color: active ? "var(--primary)" : "var(--muted)" }}>{it.label}</span>
+            {!!it.badge && (
+              <span className="absolute top-1.5 right-[28%] w-2 h-2 rounded-full" style={{ background: "var(--accent)" }} />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function EmptyState({ icon: Icon, title, subtitle, action }) {
+  return (
+    <div className="flex flex-col items-center text-center px-8 py-16 gap-3">
+      <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "var(--line)" }}>
+        <Icon size={26} color="var(--muted)" />
+      </div>
+      <p className="font-semibold text-base" style={{ color: "var(--ink)", fontFamily: "'Space Grotesk', sans-serif" }}>{title}</p>
+      <p className="text-sm" style={{ color: "var(--muted)" }}>{subtitle}</p>
+      {action}
+    </div>
+  );
+}
+
+/* ============================================================================
+   1. LANDING PAGE
+   ============================================================================ */
+
+function LandingPage({ goNext }) {
+  return (
+    <div className="flex flex-col min-h-full">
+      <div className="px-6 pt-10 pb-8" style={{ background: "linear-gradient(160deg, var(--primary) 0%, var(--primary-dark) 100%)" }}>
+        <div className="flex items-center gap-2 mb-8">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "var(--accent)" }}>
+            <Navigation size={16} color="#fff" />
+          </div>
+          <span className="font-bold text-white text-lg" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Connect & Pool</span>
+        </div>
+
+        <h1 className="text-white text-3xl font-bold leading-tight mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+          Meet your co-traveler.<br />Then share the ride.
+        </h1>
+        <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.78)" }}>
+          At the same airport, station or stand? Find people headed your way, agree to travel together — and only then book.
+        </p>
+
+        <div className="rounded-2xl p-4 mb-2" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)" }}>
+          <div className="flex items-center gap-2 text-xs mb-2" style={{ color: "rgba(255,255,255,0.65)" }}>
+            <MapPin size={13} /> DETECTED LOCATION
+          </div>
+          <FlapText text={CURRENT_LOCATION.toUpperCase()} className="text-[11px]" />
+        </div>
+      </div>
+
+      <div className="px-6 -mt-1 py-3 rounded-t-3xl flex-1" style={{ background: "var(--bg)" }}>
+        <div className="grid grid-cols-3 gap-2 my-5">
+          {[
+            { icon: ShieldCheck, label: "Verified profiles" },
+            { icon: Star, label: "Rated travelers" },
+            { icon: TrendingUp, label: "Split the fare" },
+          ].map((f, i) => (
+            <div key={i} className="rounded-xl p-3 flex flex-col items-center gap-1.5 text-center border" style={{ borderColor: "var(--line)", background: "#fff" }}>
+              <f.icon size={18} color="var(--primary)" />
+              <span className="text-[11px] font-medium" style={{ color: "var(--ink)" }}>{f.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-2xl p-4 mb-5" style={{ background: "#fff", border: "1px solid var(--line)" }}>
+          <p className="text-xs font-semibold mb-2 tracking-wide" style={{ color: "var(--muted)" }}>NOT LIKE POOLING APPS</p>
+          <div className="flex gap-3 text-sm">
+            <div className="flex-1">
+              <p className="font-semibold mb-1" style={{ color: "var(--muted)" }}>Uber / Ola Pool</p>
+              <p className="text-xs" style={{ color: "var(--muted)" }}>Algorithm assigns strangers mid-route, no say in who joins.</p>
+            </div>
+            <div className="w-px" style={{ background: "var(--line)" }} />
+            <div className="flex-1">
+              <p className="font-semibold mb-1" style={{ color: "var(--primary)" }}>Connect & Pool</p>
+              <p className="text-xs" style={{ color: "var(--ink)" }}>You see, agree and chat with co-travelers before anything's booked.</p>
+            </div>
+          </div>
+        </div>
+
+        <PrimaryButton onClick={goNext} icon={Navigation}>Find Co-Travelers Near You</PrimaryButton>
+        <p className="text-center text-xs mt-3" style={{ color: "var(--muted)" }}>Free to use · No booking without your confirmation</p>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   2. LOCATION & DESTINATION SETUP
+   ============================================================================ */
+
+function LocationSetup({ goBack, onContinue }) {
+  const [destination, setDestination] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [flex, setFlex] = useState("now");
+  const [rideType, setRideType] = useState("cab");
+
+  const suggestions = destination
+    ? PLACES.filter((p) => p.toLowerCase().includes(destination.toLowerCase()))
+    : PLACES.slice(0, 5);
+
+  return (
+    <div className="flex flex-col min-h-full">
+      <TopBar title="Set your trip" onBack={goBack} />
+      <div className="px-5 py-5 flex-1">
+        <label className="text-xs font-semibold tracking-wide" style={{ color: "var(--muted)" }}>YOU ARE AT</label>
+        <div className="flex items-center gap-2.5 mt-2 mb-6 rounded-xl px-3.5 py-3" style={{ background: "var(--success-light)" }}>
+          <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--success)" }} />
+          <span className="text-sm font-semibold flex-1" style={{ color: "var(--ink)" }}>{CURRENT_LOCATION}</span>
+          <CheckCircle2 size={16} color="var(--success)" />
+        </div>
+
+        <label className="text-xs font-semibold tracking-wide" style={{ color: "var(--muted)" }}>WHERE ARE YOU HEADED</label>
+        <div className="relative mt-2 mb-1">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" color="var(--muted)" />
+          <input
+            value={destination}
+            onChange={(e) => { setDestination(e.target.value); setShowSuggestions(true); }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="Search destination or landmark"
+            className="w-full pl-10 pr-3 py-3.5 rounded-xl text-sm outline-none border"
+            style={{ borderColor: "var(--line)", color: "var(--ink)" }}
+          />
+        </div>
+        {showSuggestions && (
+          <div className="rounded-xl border mb-6 overflow-hidden" style={{ borderColor: "var(--line)" }}>
+            {suggestions.slice(0, 5).map((s) => (
+              <button
+                key={s}
+                onClick={() => { setDestination(s); setShowSuggestions(false); }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-3 text-sm text-left border-b last:border-b-0"
+                style={{ borderColor: "var(--line)", color: "var(--ink)" }}
+              >
+                <MapPin size={15} color="var(--muted)" />
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <label className="text-xs font-semibold tracking-wide" style={{ color: "var(--muted)" }}>TRAVEL TIME FLEXIBILITY</label>
+        <div className="grid grid-cols-3 gap-2 mt-2 mb-6">
+          {[["now", "Now"], ["15", "Within 15 min"], ["30", "Within 30 min"]].map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setFlex(id)}
+              className="rounded-xl py-3 text-xs font-semibold border text-center"
+              style={{
+                borderColor: flex === id ? "var(--primary)" : "var(--line)",
+                background: flex === id ? "var(--primary)" : "#fff",
+                color: flex === id ? "#fff" : "var(--ink)",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <label className="text-xs font-semibold tracking-wide" style={{ color: "var(--muted)" }}>RIDE TYPE PREFERENCE</label>
+        <div className="flex gap-2 mt-2 mb-8">
+          {VEHICLES.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => setRideType(v.id)}
+              className="flex-1 rounded-xl py-3 border flex flex-col items-center gap-1"
+              style={{
+                borderColor: rideType === v.id ? "var(--primary)" : "var(--line)",
+                background: rideType === v.id ? "var(--primary-tint)" : "#fff",
+              }}
+            >
+              <Car size={17} color={rideType === v.id ? "var(--primary)" : "var(--muted)"} />
+              <span className="text-xs font-semibold" style={{ color: "var(--ink)" }}>{v.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="px-5 pb-6">
+        <PrimaryButton disabled={!destination} onClick={() => onContinue({ destination, flex, rideType })} icon={Search}>
+          Find Matches
+        </PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   3. INSTANT MATCH FEED  +  MATCH CARD
+   ============================================================================ */
+
+function RadarScan() {
+  return (
+    <div className="relative w-40 h-40 mx-auto my-8 flex items-center justify-center">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="absolute rounded-full border"
+          style={{
+            width: "100%", height: "100%", borderColor: "var(--primary)",
+            opacity: 0, animation: `radarPulse 2.4s ease-out ${i * 0.8}s infinite`,
+          }}
+        />
+      ))}
+      <div className="absolute w-full h-full rounded-full" style={{ background: "var(--primary-tint)" }} />
+      <div className="absolute w-full h-full rounded-full overflow-hidden" style={{ animation: "radarSweep 2.4s linear infinite" }}>
+        <div className="w-full h-full" style={{ background: "conic-gradient(from 0deg, rgba(11,79,79,0.35), transparent 40%)" }} />
+      </div>
+      <div className="relative z-10 w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--primary)" }}>
+        <Navigation size={20} color="#fff" />
+      </div>
+    </div>
+  );
+}
+
+function MatchCard({ traveler, status, onQuickConnect, onOpen }) {
+  return (
+    <button onClick={() => onOpen(traveler)} className="w-full text-left rounded-2xl p-3.5 border flex gap-3 items-start" style={{ borderColor: "var(--line)", background: "#fff" }}>
+      <Avatar name={traveler.name} initials={traveler.initials} color={traveler.color} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-semibold text-sm truncate" style={{ color: "var(--ink)", fontFamily: "'Space Grotesk', sans-serif" }}>{traveler.name}</p>
+          <span className="text-xs font-bold shrink-0" style={{ color: "var(--primary)", fontFamily: "'IBM Plex Mono', monospace" }}>{traveler.matchPercent}%</span>
+        </div>
+        <div className="flex items-center gap-1 text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+          <MapPin size={11} /> To {traveler.destination}
+        </div>
+        <div className="flex items-center gap-2 mt-1.5">
+          {traveler.verified && <VerifiedBadge small />}
+          <span className="flex items-center gap-0.5 text-xs" style={{ color: "var(--muted)" }}>
+            <Star size={11} fill="var(--warn)" color="var(--warn)" /> {traveler.rating}
+          </span>
+          <span className="text-xs" style={{ color: "var(--muted)" }}>· {traveler.timePosted}</span>
+        </div>
+      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); onQuickConnect(traveler); }}
+        disabled={status === "pending" || status === "accepted"}
+        className="shrink-0 self-center rounded-full px-3.5 py-2 text-xs font-semibold"
+        style={{
+          background: status === "accepted" ? "var(--success-light)" : status === "pending" ? "var(--line)" : "var(--accent)",
+          color: status === "accepted" ? "var(--success)" : status === "pending" ? "var(--muted)" : "#fff",
+        }}
+      >
+        {status === "accepted" ? "Connected" : status === "pending" ? "Pending" : "Quick-Connect"}
+      </button>
+    </button>
+  );
+}
+
+function MatchFeed({ trip, travelers, requestStatuses, onQuickConnect, onOpenTraveler, goBack }) {
+  const [scanning, setScanning] = useState(true);
+  const [sortBy, setSortBy] = useState("match");
+  const [genderFilter, setGenderFilter] = useState("any");
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setScanning(false), 1700);
+    return () => clearTimeout(t);
+  }, []);
+
+  let list = travelers.filter((t) => genderFilter === "any" || t.gender === genderFilter);
+  list = [...list].sort((a, b) => sortBy === "match" ? b.matchPercent - a.matchPercent : a.timePosted.localeCompare(b.timePosted));
+
+  return (
+    <div className="flex flex-col min-h-full">
+      <TopBar
+        title={trip?.destination ? `Nearby → ${trip.destination}` : "Nearby travelers"}
+        onBack={goBack}
+        right={
+          <button onClick={() => setShowFilters((s) => !s)} className="p-1.5 rounded-full active:bg-black/5">
+            <SlidersHorizontal size={18} color="var(--ink)" />
+          </button>
+        }
+      />
+
+      {showFilters && (
+        <div className="px-4 py-3 border-b flex flex-wrap gap-2" style={{ borderColor: "var(--line)", background: "#fff" }}>
+          {[["match", "Best match"], ["time", "Most recent"]].map(([id, label]) => (
+            <button key={id} onClick={() => setSortBy(id)} className="px-3 py-1.5 rounded-full text-xs font-medium border"
+              style={{ borderColor: sortBy === id ? "var(--primary)" : "var(--line)", background: sortBy === id ? "var(--primary-tint)" : "#fff", color: "var(--ink)" }}>
+              {label}
+            </button>
+          ))}
+          {[["any", "Any gender"], ["Female", "Women only"], ["Male", "Men only"]].map(([id, label]) => (
+            <button key={id} onClick={() => setGenderFilter(id)} className="px-3 py-1.5 rounded-full text-xs font-medium border"
+              style={{ borderColor: genderFilter === id ? "var(--primary)" : "var(--line)", background: genderFilter === id ? "var(--primary-tint)" : "#fff", color: "var(--ink)" }}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {scanning ? (
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <RadarScan />
+          <p className="font-semibold text-sm" style={{ color: "var(--ink)", fontFamily: "'Space Grotesk', sans-serif" }}>Scanning for co-travelers…</p>
+          <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>Matching people near {CURRENT_LOCATION.split("·")[0].trim()}</p>
+        </div>
+      ) : list.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No co-travelers nearby right now"
+          subtitle="Try widening your time window to catch more people heading your way."
+          action={<SecondaryButton onClick={() => setGenderFilter("any")}>Widen time window</SecondaryButton>}
+        />
+      ) : (
+        <div className="flex-1 px-4 py-4 flex flex-col gap-2.5 overflow-y-auto">
+          <p className="text-xs mb-1" style={{ color: "var(--muted)" }}>{list.length} travelers match your route</p>
+          {list.map((t) => (
+            <MatchCard key={t.id} traveler={t} status={requestStatuses[t.id]} onQuickConnect={onQuickConnect} onOpen={onOpenTraveler} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================================
+   4. CONNECT REQUEST & CHAT
+   ============================================================================ */
+
+function ConnectRequestScreen({ traveler, status, onAccepted, goBack, onOpenReceiverPreview }) {
+  const [dots, setDots] = useState(1);
+  useEffect(() => {
+    if (status !== "pending") return;
+    const int = setInterval(() => setDots((d) => (d % 3) + 1), 450);
+    return () => clearInterval(int);
+  }, [status]);
+
+  return (
+    <div className="flex flex-col min-h-full">
+      <TopBar title="Connect request" onBack={goBack} />
+      <div className="flex-1 flex flex-col items-center px-6 py-10 text-center">
+        <Avatar name={traveler.name} initials={traveler.initials} color={traveler.color} size={72} />
+        <p className="font-semibold text-lg mt-4" style={{ color: "var(--ink)", fontFamily: "'Space Grotesk', sans-serif" }}>{traveler.name}</p>
+        <div className="flex items-center gap-2 mt-1">
+          {traveler.verified && <VerifiedBadge />}
+          <span className="flex items-center gap-1 text-xs" style={{ color: "var(--muted)" }}><Star size={12} fill="var(--warn)" color="var(--warn)" /> {traveler.rating}</span>
+        </div>
+
+        <div className="w-full rounded-2xl p-4 mt-6 flex items-center gap-2" style={{ background: "var(--line)" }}>
+          <Lock size={14} color="var(--muted)" />
+          <p className="text-xs text-left flex-1" style={{ color: "var(--muted)" }}>Contact details are shared only after both travelers accept.</p>
+        </div>
+
+        <div className="mt-8 w-full">
+          {status === "accepted" ? (
+            <>
+              <div className="w-12 h-12 rounded-full mx-auto flex items-center justify-center mb-3" style={{ background: "var(--success-light)" }}>
+                <CheckCircle2 size={24} color="var(--success)" />
+              </div>
+              <p className="font-semibold text-sm mb-1" style={{ color: "var(--ink)" }}>You're connected!</p>
+              <p className="text-xs mb-5" style={{ color: "var(--muted)" }}>{traveler.name} accepted your request. Contact is now unlocked.</p>
+              <PrimaryButton onClick={() => onAccepted(traveler)} icon={MessageCircle}>Open Chat</PrimaryButton>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold text-sm mb-1" style={{ color: "var(--ink)" }}>
+                Request sent, waiting for response{".".repeat(dots)}
+              </p>
+              <p className="text-xs mb-5" style={{ color: "var(--muted)" }}>Most travelers respond within a minute.</p>
+              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "var(--line)" }}>
+                <div className="h-full rounded-full animate-pulse" style={{ background: "var(--primary)", width: "60%" }} />
+              </div>
+            </>
+          )}
+        </div>
+
+        <button onClick={onOpenReceiverPreview} className="text-xs mt-8 underline" style={{ color: "var(--muted)" }}>
+          Preview: what this looks like for the receiver
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ReceiverPreviewScreen({ goBack }) {
+  const demo = { name: "Rahul Verma", initials: "RV", color: "#114B7A", verified: true, rating: "4.6" };
+  return (
+    <div className="flex flex-col min-h-full">
+      <TopBar title="Receiver's view (demo)" onBack={goBack} />
+      <div className="flex-1 flex flex-col items-center px-6 py-10 text-center">
+        <p className="text-xs mb-6 px-3 py-1.5 rounded-full" style={{ background: "var(--primary-tint)", color: "var(--primary)" }}>
+          This is a simulated preview — for demo purposes only
+        </p>
+        <Avatar name={demo.name} initials={demo.initials} color={demo.color} size={72} />
+        <p className="font-semibold text-lg mt-4" style={{ color: "var(--ink)", fontFamily: "'Space Grotesk', sans-serif" }}>{demo.name} wants to connect</p>
+        <div className="flex items-center gap-2 mt-1">
+          <VerifiedBadge />
+          <span className="flex items-center gap-1 text-xs" style={{ color: "var(--muted)" }}><Star size={12} fill="var(--warn)" color="var(--warn)" /> {demo.rating}</span>
+        </div>
+        <p className="text-sm mt-3" style={{ color: "var(--muted)" }}>Heading to Gachibowli · 94% route match · Now</p>
+        <div className="flex gap-3 w-full mt-8">
+          <SecondaryButton full onClick={goBack}>Decline</SecondaryButton>
+          <PrimaryButton full onClick={goBack} icon={CheckCircle2}>Accept</PrimaryButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChatScreen({ traveler, goBack }) {
+  const [messages, setMessages] = useState([
+    { from: "them", text: "Hey! Saw we're both headed to Gachibowli — landed a few min back?" },
+    { from: "me", text: "Yes just cleared baggage, at the pickup zone in 5." },
+  ]);
+  const [input, setInput] = useState("");
+  const [contactUnlocked, setContactUnlocked] = useState(true);
+
+  function send() {
+    if (!input.trim()) return;
+    setMessages((m) => [...m, { from: "me", text: input.trim() }]);
+    setInput("");
+  }
+
+  return (
+    <div className="flex flex-col min-h-full">
+      <TopBar
+        title={traveler?.name || "Chat"}
+        onBack={goBack}
+        right={<Avatar name={traveler?.name} initials={traveler?.initials || "?"} color={traveler?.color || "#0B4F4F"} size={30} />}
+      />
+      <div className="px-4 py-2.5 flex items-center gap-2 border-b" style={{ borderColor: "var(--line)", background: "var(--success-light)" }}>
+        <Unlock size={13} color="var(--success)" />
+        <span className="text-xs font-medium" style={{ color: "var(--success)" }}>Contact unlocked — {traveler?.phone || "+91 98••• •••••"}</span>
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2.5">
+        {messages.map((m, i) => (
+          <div key={i} className={"max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm " + (m.from === "me" ? "self-end" : "self-start")}
+            style={{ background: m.from === "me" ? "var(--primary)" : "#fff", color: m.from === "me" ? "#fff" : "var(--ink)", border: m.from === "me" ? "none" : "1px solid var(--line)" }}>
+            {m.text}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-2 px-4 py-3 border-t" style={{ borderColor: "var(--line)" }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
+          placeholder="Message…"
+          className="flex-1 rounded-full px-4 py-2.5 text-sm outline-none border"
+          style={{ borderColor: "var(--line)" }}
+        />
+        <button onClick={send} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--accent)" }}>
+          <Send size={16} color="#fff" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   5. GROUP FORMATION & RIDE BOOKING
+   ============================================================================ */
+
+function GroupBooking({ group, trip, goBack, onBook }) {
+  const [vehicle, setVehicle] = useState(trip?.rideType || "cab");
+  const chosen = VEHICLES.find((v) => v.id === vehicle);
+  const perPerson = Math.ceil(chosen.fare / group.length);
+
+  return (
+    <div className="flex flex-col min-h-full">
+      <TopBar title="Your group" onBack={goBack} />
+      <div className="flex-1 px-5 py-5">
+        <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--muted)" }}>
+          GROUP · {group.length} PEOPLE · TO {trip?.destination?.toUpperCase()}
+        </p>
+        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ borderColor: "var(--line)" }}>
+          {group.map((g, i) => (
+            <div key={g.id} className="flex items-center gap-3 px-3.5 py-3" style={{ borderTop: i ? "1px solid var(--line)" : "none", background: "#fff" }}>
+              <Avatar name={g.name} initials={g.initials} color={g.color} size={38} />
+              <div className="flex-1">
+                <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{g.name}{g.isSelf ? " (You)" : ""}</p>
+                <div className="flex items-center gap-2">
+                  {g.verified && <VerifiedBadge small />}
+                  <span className="text-xs" style={{ color: "var(--muted)" }}>⭐ {g.rating}</span>
+                </div>
+              </div>
+              <CheckCircle2 size={16} color="var(--success)" />
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-2xl px-3.5 py-3 mb-6 flex items-center gap-2.5" style={{ background: "var(--primary-tint)" }}>
+          <MapPin size={16} color="var(--primary)" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold" style={{ color: "var(--ink)" }}>Shared pickup point</p>
+            <p className="text-xs" style={{ color: "var(--muted)" }}>T1 Arrivals — Gate 3 pickup bay</p>
+          </div>
+        </div>
+
+        <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--muted)" }}>CHOOSE VEHICLE — ONE PICK FOR THE GROUP</p>
+        <div className="flex flex-col gap-2 mb-6">
+          {VEHICLES.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => setVehicle(v.id)}
+              disabled={v.seats < group.length}
+              className="flex items-center gap-3 rounded-xl border px-3.5 py-3 text-left disabled:opacity-40"
+              style={{ borderColor: vehicle === v.id ? "var(--primary)" : "var(--line)", background: vehicle === v.id ? "var(--primary-tint)" : "#fff" }}
+            >
+              <Car size={20} color="var(--primary)" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{v.label} · up to {v.seats}</p>
+                <p className="text-xs" style={{ color: "var(--muted)" }}>ETA {v.eta} min</p>
+              </div>
+              <span className="text-sm font-bold" style={{ fontFamily: "'IBM Plex Mono', monospace", color: "var(--ink)" }}>₹{v.fare}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="rounded-2xl p-4" style={{ background: "var(--ink)" }}>
+          <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.6)" }}>FARE SPLIT PREVIEW</p>
+          <div className="flex items-end justify-between">
+            <span className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>₹{chosen.fare} ÷ {group.length} people</span>
+            <FlapText text={`₹${perPerson} EACH`} tone="light" />
+          </div>
+        </div>
+      </div>
+      <div className="px-5 pb-6">
+        <PrimaryButton onClick={() => onBook({ vehicle: chosen, perPerson })} icon={Car}>Book Ride</PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   6. RIDE SUMMARY / TRACKING
+   ============================================================================ */
+
+function RideSummary({ group, booking, trip, goBack, onCompleteRide }) {
+  const [confirmed, setConfirmed] = useState({});
+  const [showSOS, setShowSOS] = useState(false);
+  const allConfirmed = group.every((g) => confirmed[g.id]);
+
+  return (
+    <div className="flex flex-col min-h-full">
+      <TopBar title="Ride in progress" onBack={goBack} />
+      <div className="flex-1 px-5 py-5">
+        <div className="rounded-2xl overflow-hidden mb-5 relative" style={{ height: 150, background: "var(--primary-tint)" }}>
+          <div className="absolute inset-0" style={{
+            backgroundImage: "linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px)",
+            backgroundSize: "22px 22px", opacity: 0.7,
+          }} />
+          <div className="absolute" style={{ top: "45%", left: "38%" }}>
+            <span className="block w-3 h-3 rounded-full" style={{ background: "var(--accent)", boxShadow: "0 0 0 6px rgba(255,107,53,0.25)" }} />
+          </div>
+          <div className="absolute bottom-2 left-2 text-xs font-medium px-2 py-1 rounded-lg" style={{ background: "#fff", color: "var(--ink)" }}>
+            Live tracking · arriving in 4 min
+          </div>
+        </div>
+
+        <div className="rounded-2xl border p-4 mb-5 flex items-center gap-3" style={{ borderColor: "var(--line)" }}>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "var(--primary)" }}>
+            <Car size={20} color="#fff" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{booking.vehicle.label} · TS 09 EA 4471</p>
+            <p className="text-xs" style={{ color: "var(--muted)" }}>Suresh Kumar · 4.9 ★ · Swift Dzire, White</p>
+          </div>
+          <a href="tel:" className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "var(--primary-tint)" }}>
+            <Phone size={15} color="var(--primary)" />
+          </a>
+        </div>
+
+        <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--muted)" }}>GROUP PICKUP CONFIRMATION</p>
+        <div className="rounded-2xl border mb-5 overflow-hidden" style={{ borderColor: "var(--line)" }}>
+          {group.map((g, i) => (
+            <div key={g.id} className="flex items-center gap-3 px-3.5 py-3" style={{ borderTop: i ? "1px solid var(--line)" : "none" }}>
+              <Avatar name={g.name} initials={g.initials} color={g.color} size={34} />
+              <p className="flex-1 text-sm font-medium" style={{ color: "var(--ink)" }}>{g.name}{g.isSelf ? " (You)" : ""}</p>
+              {confirmed[g.id] ? (
+                <span className="flex items-center gap-1 text-xs font-medium" style={{ color: "var(--success)" }}><CheckCircle2 size={14} /> Onboard</span>
+              ) : (
+                <button onClick={() => setConfirmed((c) => ({ ...c, [g.id]: true }))} className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ background: "var(--line)", color: "var(--ink)" }}>
+                  Confirm pickup
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-2xl p-4 mb-5" style={{ background: "var(--bg)", border: "1px solid var(--line)" }}>
+          <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--muted)" }}>FARE BREAKDOWN</p>
+          {group.map((g) => (
+            <div key={g.id} className="flex justify-between text-sm py-1" style={{ color: "var(--ink)" }}>
+              <span>{g.name}{g.isSelf ? " (You)" : ""}</span>
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>₹{booking.perPerson}</span>
+            </div>
+          ))}
+          <div className="flex justify-between text-sm font-bold pt-2 mt-1 border-t" style={{ borderColor: "var(--line)", color: "var(--ink)" }}>
+            <span>Total</span>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>₹{booking.vehicle.fare}</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2.5 mb-5">
+          <SecondaryButton full icon={Users}>Share ride status</SecondaryButton>
+          <button onClick={() => setShowSOS(true)} className="flex-1 rounded-xl py-3 font-semibold text-sm flex items-center justify-center gap-2" style={{ background: "#FDECEC", color: "#C23B3B" }}>
+            <AlertTriangle size={16} /> SOS
+          </button>
+        </div>
+      </div>
+      <div className="px-5 pb-6">
+        <PrimaryButton disabled={!allConfirmed} onClick={onCompleteRide} icon={CheckCircle2}>
+          {allConfirmed ? "End Ride & Rate" : "Confirm all pickups to continue"}
+        </PrimaryButton>
+      </div>
+
+      {showSOS && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(10,20,20,0.5)" }}>
+          <div className="w-full max-w-md rounded-t-3xl p-6 flex flex-col items-center text-center" style={{ background: "#fff" }}>
+            <ShieldAlert size={30} color="#C23B3B" />
+            <p className="font-semibold text-base mt-3" style={{ color: "var(--ink)", fontFamily: "'Space Grotesk', sans-serif" }}>Send SOS alert?</p>
+            <p className="text-xs mt-1 mb-5" style={{ color: "var(--muted)" }}>This shares your live location and trip details with emergency contacts and support.</p>
+            <div className="flex gap-3 w-full">
+              <SecondaryButton full onClick={() => setShowSOS(false)}>Cancel</SecondaryButton>
+              <button onClick={() => setShowSOS(false)} className="flex-1 rounded-xl py-3 font-semibold text-sm" style={{ background: "#C23B3B", color: "#fff" }}>Send SOS</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================================
+   7. PROFILE & PREFERENCES
+   ============================================================================ */
+
+function ProfilePage({ goBack, rideHistory }) {
+  const [prefs, setPrefs] = useState({ home: "Gachibowli", work: "Hitech City", rideType: "cab", gender: "any", flex: "now" });
+
+  return (
+    <div className="flex flex-col min-h-full">
+      <TopBar title="Profile" onBack={goBack} />
+      <div className="flex-1 px-5 py-5 overflow-y-auto">
+        <div className="flex items-center gap-4 mb-6">
+          <Avatar name="You" initials="ME" color="var(--primary)" size={64} />
+          <div>
+            <p className="font-semibold text-lg" style={{ color: "var(--ink)", fontFamily: "'Space Grotesk', sans-serif" }}>Aditya Sharma</p>
+            <div className="flex items-center gap-2 mt-1">
+              <VerifiedBadge small />
+              <span className="text-xs flex items-center gap-1" style={{ color: "var(--muted)" }}><Star size={11} fill="var(--warn)" color="var(--warn)" /> 4.9 · 23 rides</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5 mb-6">
+          <div className="rounded-xl border p-3 flex items-center gap-2" style={{ borderColor: "var(--line)" }}>
+            <CheckCircle2 size={15} color="var(--success)" /><span className="text-xs font-medium" style={{ color: "var(--ink)" }}>ID Verified</span>
+          </div>
+          <div className="rounded-xl border p-3 flex items-center gap-2" style={{ borderColor: "var(--line)" }}>
+            <CheckCircle2 size={15} color="var(--success)" /><span className="text-xs font-medium" style={{ color: "var(--ink)" }}>Phone Verified</span>
+          </div>
+        </div>
+
+        <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--muted)" }}>DEFAULT DESTINATIONS</p>
+        <div className="flex gap-2 mb-6">
+          <input value={prefs.home} onChange={(e) => setPrefs({ ...prefs, home: e.target.value })} placeholder="Home" className="flex-1 rounded-xl border px-3 py-2.5 text-sm outline-none" style={{ borderColor: "var(--line)" }} />
+          <input value={prefs.work} onChange={(e) => setPrefs({ ...prefs, work: e.target.value })} placeholder="Work" className="flex-1 rounded-xl border px-3 py-2.5 text-sm outline-none" style={{ borderColor: "var(--line)" }} />
+        </div>
+
+        <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--muted)" }}>DEFAULT RIDE TYPE</p>
+        <div className="flex gap-2 mb-6">
+          {VEHICLES.map((v) => (
+            <button key={v.id} onClick={() => setPrefs({ ...prefs, rideType: v.id })} className="flex-1 rounded-xl py-2.5 text-xs font-semibold border" style={{ borderColor: prefs.rideType === v.id ? "var(--primary)" : "var(--line)", background: prefs.rideType === v.id ? "var(--primary-tint)" : "#fff", color: "var(--ink)" }}>
+              {v.label}
+            </button>
+          ))}
+        </div>
+
+        <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--muted)" }}>CO-TRAVELER GENDER PREFERENCE</p>
+        <div className="flex gap-2 mb-6">
+          {[["any", "Any"], ["Female", "Women only"], ["Male", "Men only"]].map(([id, label]) => (
+            <button key={id} onClick={() => setPrefs({ ...prefs, gender: id })} className="flex-1 rounded-xl py-2.5 text-xs font-semibold border" style={{ borderColor: prefs.gender === id ? "var(--primary)" : "var(--line)", background: prefs.gender === id ? "var(--primary-tint)" : "#fff", color: "var(--ink)" }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--muted)" }}>RIDE HISTORY</p>
+        <div className="rounded-2xl border mb-4 overflow-hidden" style={{ borderColor: "var(--line)" }}>
+          {rideHistory.map((r, i) => (
+            <div key={i} className="flex items-center justify-between px-3.5 py-3" style={{ borderTop: i ? "1px solid var(--line)" : "none" }}>
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>{r.to}</p>
+                <p className="text-xs" style={{ color: "var(--muted)" }}>{r.date} · {r.people} people</p>
+              </div>
+              <span className="text-sm font-semibold" style={{ fontFamily: "'IBM Plex Mono', monospace", color: "var(--ink)" }}>₹{r.paid}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   8. RATINGS & FEEDBACK
+   ============================================================================ */
+
+function StarPicker({ value, onChange }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button key={n} onClick={() => onChange(n)}>
+          <Star size={22} fill={n <= value ? "var(--warn)" : "none"} color={n <= value ? "var(--warn)" : "var(--line)"} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RatingsFeedback({ group, driverName, goDone }) {
+  const [ratings, setRatings] = useState({});
+  const [feedback, setFeedback] = useState("");
+  const [flag, setFlag] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const targets = [{ id: "driver", name: driverName, isDriver: true }, ...group.filter((g) => !g.isSelf)];
+
+  if (submitted) {
+    return (
+      <div className="flex flex-col min-h-full items-center justify-center px-8 text-center">
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--success-light)" }}>
+          <CheckCircle2 size={30} color="var(--success)" />
+        </div>
+        <p className="font-semibold text-lg mb-1" style={{ color: "var(--ink)", fontFamily: "'Space Grotesk', sans-serif" }}>Thanks for the feedback</p>
+        <p className="text-sm mb-6" style={{ color: "var(--muted)" }}>It helps keep Connect & Pool safe and trustworthy for everyone.</p>
+        <PrimaryButton onClick={goDone}>Back to Nearby</PrimaryButton>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-full">
+      <TopBar title="Rate your ride" />
+      <div className="flex-1 px-5 py-5 overflow-y-auto">
+        {targets.map((t) => (
+          <div key={t.id} className="rounded-2xl border p-4 mb-3 flex items-center justify-between" style={{ borderColor: "var(--line)" }}>
+            <div className="flex items-center gap-3">
+              <Avatar name={t.name} initials={t.initials || t.name.split(" ").map((w) => w[0]).join("")} color={t.color || "var(--primary)"} size={38} />
+              <div>
+                <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{t.name}</p>
+                <p className="text-xs" style={{ color: "var(--muted)" }}>{t.isDriver ? "Driver" : "Co-traveler"}</p>
+              </div>
+            </div>
+            <StarPicker value={ratings[t.id] || 0} onChange={(v) => setRatings((r) => ({ ...r, [t.id]: v }))} />
+          </div>
+        ))}
+
+        <textarea
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
+          placeholder="Optional feedback about your ride…"
+          className="w-full rounded-xl border p-3.5 text-sm outline-none mt-2 mb-4 resize-none"
+          style={{ borderColor: "var(--line)", height: 90 }}
+        />
+
+        <button onClick={() => setFlag((f) => !f)} className="w-full flex items-center gap-2.5 rounded-xl border p-3.5" style={{ borderColor: flag ? "#C23B3B" : "var(--line)", background: flag ? "#FDECEC" : "#fff" }}>
+          <Flag size={15} color={flag ? "#C23B3B" : "var(--muted)"} />
+          <span className="text-sm flex-1 text-left" style={{ color: flag ? "#C23B3B" : "var(--ink)" }}>Report a safety concern</span>
+          <div className="w-4 h-4 rounded border flex items-center justify-center" style={{ borderColor: flag ? "#C23B3B" : "var(--line)", background: flag ? "#C23B3B" : "transparent" }}>
+            {flag && <CheckCircle2 size={12} color="#fff" />}
+          </div>
+        </button>
+      </div>
+      <div className="px-5 pb-6">
+        <PrimaryButton onClick={() => setSubmitted(true)}>Submit</PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   ROOT APP
+   ============================================================================ */
+
+function App() {
+  const [screen, setScreen] = useState("landing");
+  const [history, setHistory] = useState([]);
+  const [trip, setTrip] = useState(null);
+  const [travelers] = useState(makeTravelers());
+  const [requestStatuses, setRequestStatuses] = useState({});
+  const [activeTraveler, setActiveTraveler] = useState(null);
+  const [connectedList, setConnectedList] = useState([]);
+  const [group, setGroup] = useState([]);
+  const [booking, setBooking] = useState(null);
+  const timers = useRef({});
+
+  function go(next) {
+    setHistory((h) => [...h, screen]);
+    setScreen(next);
+  }
+  function back() {
+    setHistory((h) => {
+      const copy = [...h];
+      const prev = copy.pop() || "landing";
+      setScreen(prev);
+      return copy;
+    });
+  }
+
+  function quickConnect(traveler) {
+    if (requestStatuses[traveler.id]) return;
+    setRequestStatuses((s) => ({ ...s, [traveler.id]: "pending" }));
+    setActiveTraveler(traveler);
+    go("request");
+    clearTimeout(timers.current[traveler.id]);
+    timers.current[traveler.id] = setTimeout(() => {
+      setRequestStatuses((s) => ({ ...s, [traveler.id]: "accepted" }));
+      setConnectedList((l) => (l.find((x) => x.id === traveler.id) ? l : [...l, traveler]));
+    }, 2200);
+  }
+
+  function openTraveler(traveler) {
+    setActiveTraveler(traveler);
+    if (requestStatuses[traveler.id]) go("request");
+  }
+
+  function onAcceptedOpenChat(traveler) {
+    go("chat");
+  }
+
+  function proceedToGroup() {
+    const selfMember = { id: "self", name: "Aditya Sharma", initials: "AS", color: "var(--primary)", verified: true, rating: "4.9", isSelf: true };
+    const members = [selfMember, ...connectedList.slice(0, 3)];
+    setGroup(members);
+    go("group");
+  }
+
+  const rideHistory = [
+    { to: "Gachibowli", date: "2 Jul", people: 3, paid: 140 },
+    { to: "Secunderabad Stn", date: "27 Jun", people: 2, paid: 190 },
+    { to: "Hitech City", date: "19 Jun", people: 4, paid: 95 },
+  ];
+
+  let content;
+  if (screen === "landing") content = <LandingPage goNext={() => go("location")} />;
+  else if (screen === "location") content = <LocationSetup goBack={back} onContinue={(t) => { setTrip(t); go("feed"); }} />;
+  else if (screen === "feed") content = (
+    <MatchFeed trip={trip} travelers={travelers} requestStatuses={requestStatuses} onQuickConnect={quickConnect} onOpenTraveler={openTraveler} goBack={back} />
+  );
+  else if (screen === "request") content = (
+    <ConnectRequestScreen
+      traveler={activeTraveler}
+      status={requestStatuses[activeTraveler?.id]}
+      onAccepted={onAcceptedOpenChat}
+      goBack={back}
+      onOpenReceiverPreview={() => go("receiverPreview")}
+    />
+  );
+  else if (screen === "receiverPreview") content = <ReceiverPreviewScreen goBack={back} />;
+  else if (screen === "chat") content = <ChatScreen traveler={activeTraveler} goBack={back} />;
+  else if (screen === "group") content = <GroupBooking group={group} trip={trip} goBack={back} onBook={(b) => { setBooking(b); go("summary"); }} />;
+  else if (screen === "summary") content = <RideSummary group={group} booking={booking} trip={trip} goBack={back} onCompleteRide={() => go("rating")} />;
+  else if (screen === "profile") content = <ProfilePage goBack={back} rideHistory={rideHistory} />;
+  else if (screen === "rating") content = <RatingsFeedback group={group} driverName="Suresh Kumar" goDone={() => { setHistory([]); setScreen("feed"); }} />;
+  else content = <LandingPage goNext={() => go("location")} />;
+
+  const showBottomNav = ["feed", "profile"].includes(screen) || (screen === "chat" && connectedList.length);
+  const showConnectShortcut = connectedList.length > 0 && screen === "feed";
+
+  return (
+    <div className="w-full h-full flex items-center justify-center" style={{ background: "#E7EEEC", fontFamily: "'Inter', sans-serif", minHeight: 640 }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+        :root {
+          --bg: #F5F9F8;
+          --ink: #0A1F1C;
+          --primary: #0B4F4F;
+          --primary-dark: #073030;
+          --primary-tint: #E4F0EE;
+          --accent: #FF6B35;
+          --success: #1E9E6D;
+          --success-light: #E4F5EC;
+          --warn: #E0A100;
+          --line: #DCE8E6;
+          --muted: #5B7370;
+        }
+
+        .flap-row { display: inline-flex; gap: 2px; }
+        .flap-tile {
+          display: inline-block; color: #fff; font-family: 'IBM Plex Mono', monospace;
+          font-weight: 600; padding: 3px 4px; border-radius: 4px;
+          transform: translateY(-6px) rotateX(55deg); opacity: 0;
+          animation: flapIn 0.4s ease forwards;
+        }
+        @keyframes flapIn { to { transform: none; opacity: 1; } }
+
+        @keyframes radarPulse {
+          0% { transform: scale(0.3); opacity: 0.55; }
+          100% { transform: scale(1); opacity: 0; }
+        }
+        @keyframes radarSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        * { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible, input:focus-visible, textarea:focus-visible {
+          outline: 2px solid var(--primary); outline-offset: 2px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .flap-tile, [style*="animation"] { animation: none !important; }
+        }
+      `}</style>
+
+      <div className="relative w-full flex flex-col overflow-hidden" style={{ maxWidth: 430, height: 800, background: "var(--bg)", borderRadius: 28, boxShadow: "0 30px 60px -20px rgba(10,30,28,0.35)", border: "1px solid rgba(10,30,28,0.06)" }}>
+        <div className="flex-1 flex flex-col overflow-y-auto">{content}</div>
+        {showConnectShortcut && (
+          <button
+            onClick={proceedToGroup}
+            className="absolute bottom-24 right-4 rounded-full px-4 py-3 flex items-center gap-2 font-semibold text-sm shadow-lg"
+            style={{ background: "var(--accent)", color: "#fff" }}
+          >
+            <Users size={16} /> Form group ({connectedList.length + 1})
+          </button>
+        )}
+        {showBottomNav && <BottomNav screen={screen} setScreen={(s) => { setHistory([]); setScreen(s); }} requestCount={connectedList.length} />}
+      </div>
+    </div>
+  );
+}
+
+const rootEl = document.getElementById("root");
+ReactDOM.createRoot(rootEl).render(<App />);
+
+</script>
+</body>
+</html>
